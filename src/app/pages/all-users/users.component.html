@@ -16,19 +16,28 @@
   <div class="row justify-content-center">
 
     <p-table #userdt [resizableColumns]="true" [value]="users" styleClass="p-datatable-striped"
-        [lazy]="true" (onLazyLoad)="loadUsers(userdt)" [rowsPerPageOptions]="[5,10,25,50,100]"
+        [lazy]="pageConfigs.isLazy" (onLazyLoad)="loadUsers(userdt)" [rowsPerPageOptions]="[5,10,25,50,100]"
         [paginator]="true" [rows]="numberOfRowsPerPage" [totalRecords]="totalRecords">
       <ng-template pTemplate="header">
-        <tr>
+        <tr *ngIf="pageConfigs.isLazy">
           <th style="width:10%">#</th>
-          <th style="width:20%">Name</th>
-          <th style="width:20%">Gender</th>
-          <th style="width:25%">User Type</th>
-          <th>isActive</th>
-          <th style="width:40%">Added On</th>
+          <th style="width:20%" pSortableColumn="name">Name<p-sortIcon (click)="applyServerSideSorting('name')"></p-sortIcon></th>
+          <th style="width:20%" pSortableColumn="gender">Gender<p-sortIcon (click)="applyServerSideSorting('gender')"></p-sortIcon></th>
+          <th style="width:25%" pSortableColumn="role">User Type<p-sortIcon (click)="applyServerSideSorting('role')"></p-sortIcon></th>
+          <th style="width:25%" >Status</th>
+          <th style="width:40%" pSortableColumn="displayTime">Added On<p-sortIcon (click)="applyServerSideSorting('createdAt')"></p-sortIcon></th>
           <th style="width:30%"></th>
         </tr>
-        <tr>
+        <tr *ngIf="!pageConfigs.isLazy">
+          <th style="width:10%">#</th>
+          <th style="width:20%" pSortableColumn="name">Name<p-sortIcon field="name"></p-sortIcon></th>
+          <th style="width:20%" pSortableColumn="gender">Gender<p-sortIcon field="gender"></p-sortIcon></th>
+          <th style="width:25%" pSortableColumn="role">User Type<p-sortIcon field="role"></p-sortIcon></th>
+          <th style="width:25%" >Status</th>
+          <th style="width:40%" pSortableColumn="createdOn">Added On<p-sortIcon field="createdOn"></p-sortIcon></th>
+          <th style="width:30%"></th>
+        </tr>
+        <tr *ngIf = "pageConfigs.isLazy">
           <th style="width:10%"> Filters</th>
           <th style="width:20%">
             <span>
@@ -49,7 +58,10 @@
             optionValue="code" (onChange)="applyTypeFilter(typeFilterInput)">
           </p-dropdown>
           </th>
-          <th></th>
+          <th>
+            <span class="mr-2">Only Active:</span>
+            <p-checkbox binary="true" [(ngModel)]="isOnlyActive" (onChange)="applyStatusFilter()"></p-checkbox>
+          </th>
           <th style="width:40%">
             <p-dialog header="Select Date Range" [(visible)]="displayCalendar" 
               [style]="{'width': '20vw'}" [baseZIndex]="10000">
@@ -83,6 +95,26 @@
             </button>
           </th>
         </tr>
+        <tr *ngIf = "!pageConfigs.isLazy">
+          <th style="width:10%"> Filters</th>
+          <th style="width:20%">
+            <p-columnFilter type="text" field="name"></p-columnFilter>
+          </th>
+          <th style="width:30%">
+            <p-columnFilter type="text" field="gender"></p-columnFilter>
+          </th>
+          <th style="width:25%">
+            <p-columnFilter type="text" field="role"></p-columnFilter>
+          </th>
+          <th>
+            <p-columnFilter type="text" field="status"></p-columnFilter>
+          </th>
+          <th style="width:40%">
+            <p-columnFilter type="text" field="displayTime"></p-columnFilter>
+          </th>
+          <th style="width:30%">
+          </th>
+        </tr>
       </ng-template>
 
       <ng-template pTemplate="body" class="text-center" let-user let-i="rowIndex">
@@ -105,7 +137,7 @@
                         optionValue="code">
             </p-dropdown>
           </td>
-          <td>
+          <td style="width:10%">
             {{user.status}}
           </td>
           <td style="width:40%">{{user.displayTime}}</td>

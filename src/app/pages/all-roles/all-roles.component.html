@@ -20,18 +20,37 @@
           </tr>
         </ng-template>
       </p-table>
-      <p-table #rolesdt [value]="roles" styleClass="p-datatable-striped"
-        [lazy]="true" (onLazyLoad)="loadRoles(rolesdt)" 
+      <p-table #rolesdt [resizableColumns]="true" [value]="roles" styleClass="p-datatable-striped"
+        [lazy]="pageConfigs.isLazy" (onLazyLoad)="loadRoles(rolesdt)" [rowsPerPageOptions]="[5,10,25,50,100]"
         [paginator]="true" [rows]="numberOfRowsPerPage" [totalRecords]="totalRecords">
         <ng-template pTemplate="header">
-          <tr>
+          <tr *ngIf="pageConfigs.isLazy">
             <th class="text-center">#</th>
-            <th class="text-center">Roles</th>
-            <th class="text-center">
-              <p-dropdown appendTo="body" [options]="numberOfRowsPerPageOptions" 
-              (onChange) = "loadRoles(rolesdt)" [(ngModel)]="numberOfRowsPerPage" 
-              optionLabel="rows" optionValue="rows">
-            </p-dropdown></th>
+            <th class="text-center" pSortableColumn="name">Roles <p-sortIcon (click)="applyServerSideSorting('name')"></p-sortIcon></th>
+            <th class="text-center"></th>
+          </tr>
+          <tr *ngIf="!pageConfigs.isLazy">
+            <th class="text-center">#</th>
+            <th class="text-center" pSortableColumn="name">Roles <p-sortIcon field="name"></p-sortIcon></th>
+            <th class="text-center"></th>
+          </tr>
+          <tr *ngIf = "pageConfigs.isLazy">
+            <th style="width:10%" class="text-center">Filters</th>
+            <th style="width:20%" class="text-center">
+              <input pInputText style="width: 90%;" [(ngModel)]="nameFilterInput" 
+              (keyup.enter) = "applyFilter()" (blur) = "applyFilter()"
+              class="p-inputtext mx-2" placeholder="Filter by name" />
+            </th>
+            <th style="width:20%">
+            </th>
+          </tr>
+          <tr *ngIf = "!pageConfigs.isLazy">
+            <th style="width:10%" class="text-center">Filters</th>
+            <th style="width:20%" class="text-center">
+              <p-columnFilter type="text" field="name"></p-columnFilter>
+            </th>
+            <th style="width:30%">
+            </th>
           </tr>
         </ng-template>
   

@@ -1,10 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { LazyLoadEvent } from 'primeng/api';
-import { ROWS_PER_PAGE_OPTIONS } from 'src/app/constants/pagination.constant';
 import { USER_GENDERS, USER_GENDERS_FILTER_OPTIONS, USER_TYPES, USER_TYPE_FILTER_OPTIONS } from 'src/app/constants/user.constant';
+import { GenericEntityComponent, GET_CONFIGURATION_DTO } from 'src/app/generics/generic-entity';
 import { DateFormatting } from 'src/app/helpers/date-formatting';
-import { Sorting, SortingRuleFormat } from 'src/app/helpers/sorting';
 import { SudoService } from 'src/app/services/sudo.service';
 import { DropdownDTO } from '../../dto/dropdown.dto';
 import { DisplayUserDTO, UpdateUserDTO } from '../../dto/user.dto';
@@ -14,64 +12,85 @@ import { DisplayUserDTO, UpdateUserDTO } from '../../dto/user.dto';
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
 })
-export class UsersComponent implements OnInit {
+export class UsersComponent extends GenericEntityComponent implements OnInit {
 
+  /* component specific variables */
   private users: DisplayUserDTO[];
-  private error: string;
   private userRoles: DropdownDTO[] =  USER_TYPES;
   private genders: DropdownDTO[] = USER_GENDERS;
-  private displayError: boolean = false;
 
-  /* pagination variables */
-  private skip: number;
-  private take: number;
-  private totalRecords: number;
-  private numberOfRowsPerPageOptions: {rows: number}[] = ROWS_PER_PAGE_OPTIONS;
-  private numberOfRowsPerPage: number = 10;
-
-  /* filtering variables */
+  /* server side filtering variables */
   private where: string = null;
   private whereName: string = null;
   private whereGender: string = null;
   private whereType: string = null;
+  private whereActive: string = null;
   private nameFilterInput: string;
   private genderFilterInputOptions: DropdownDTO[] = USER_GENDERS_FILTER_OPTIONS;
   private genderFilterInput: string = null;
   private typeFilterInputOptions: DropdownDTO[] = USER_TYPE_FILTER_OPTIONS;
   private typeFilterInput: string = null;
-  private displayCalendar: boolean = false;
-  private startDateFilterInput: string = null;
-  private endDateFilterInput: string = DateFormatting.dateStringToUTC(new Date());
-  private dateRange: {start: string, end: string} = null;
+  private isOnlyActive: boolean = false;
+
+  /* configurations */
+  private pageConfigs: GET_CONFIGURATION_DTO = {
+    isLazy : true
+  };
 
   constructor(
     private readonly sudoService: SudoService,
     private readonly router: Router,
   ) {
-
+    super();
   }
 
-  ngOnInit() {
+  async ngOnInit() {
+    if(!this.pageConfigs.isLazy){
+      await this.getAllUsers();
+    }
+  }
+
+  private async getAllUsers(): Promise<void> {
+
+    const UserInformationData: {users: any[], length: number} =
+     await this.sudoService
+     .getUsers(this.skip, this.take, this.where, this.dateRange, this.orderBy)
+     .toPromise();
+    this.users = [];
+    const UserInformation = UserInformationData.users;
+    this.totalRecords = UserInformationData.length;
+    if (UserInformation && UserInformation.length > 0) {
+      UserInformation.forEach((user) => {
+        const userObject: DisplayUserDTO = {
+          id: user.id,
+          name: user.name,
+          profilePictureUrl: user.profilePictureUrl,
+          contactNo: user.twoFactorPhone,
+          gender: user.gender,
+          role: user.role,
+          status: user.active == true ? 'Active' : 'Inactive',
+          createdOn: DateFormatting.utcDateToString(user.createdAt),
+          displayTime: DateFormatting.getLocalDateTime12H(user.createdAt),
+          updatable: false
+        }
+        this.users.push(userObject);
+      })
+    }
+    // this.users = this.sortUsers(this.users);
+    if(!this.pageConfigs.isLazy){
+      this.users = this.preSort(this.users, [
+        {field: "createdOn", order: "DESC"},
+      ]);
+    }
+  }
+
+  private userDetails(userId: number): void {
+    this.router.navigate([`/admin/users/${userId}`]);
   }
 
   private editUser(userId: number): void {
     const index: number = this.users.findIndex(user => user.id == userId);
     this.users[index].updatable = true;
-  }
-
-  private updateUser(user: DisplayUserDTO): void {
-    const updateUserObject: UpdateUserDTO = {
-      name: user.name,
-      role: user.role,
-      gender: user.gender
-    }
-    this.sudoService.updateUser(user.id, updateUserObject).subscribe((userDetails) => {
-      this.getAllUsers();
-    },
-    error => {
-      this.displayError = true;
-      this.error = "Could not update user"
-    });
   }
 
   private closeEditUser(userId: number): void {
@@ -80,61 +99,57 @@ export class UsersComponent implements OnInit {
     this.getAllUsers();
   }
 
-  private getAllUsers(): void {
-
-    this.sudoService.getUsers(this.skip, this.take, this.where, this.dateRange).subscribe((UserInformationData: {users: any[], length: number}) => {
-      this.users = [];
-      const UserInformation = UserInformationData.users;
-      this.totalRecords = UserInformationData.length;
-      if (UserInformation && UserInformation.length > 0) {
-        UserInformation.forEach((user) => {
-          const userObject: DisplayUserDTO = {
-            id: user.id,
-            name: user.name,
-            profilePictureUrl: user.profilePictureUrl,
-            contactNo: user.twoFactorPhone,
-            gender: user.gender,
-            role: user.role,
-            status: user.active == true ? 'Active' : 'Inactive',
-            createdOn: DateFormatting.utcDateToString(user.createdAt),
-            displayTime: DateFormatting.getLocalDateTime12H(user.createdAt),
-            updatable: false
-          }
-          this.users.push(userObject);
-        })
+  private updateUser(user: DisplayUserDTO): void {
+    const updateUserObject: UpdateUserDTO = {
+      name: user.name,
+      role: user.role,
+      gender: user.gender
+    }
+    this.sudoService.updateUser(user.id, updateUserObject).subscribe(async (userDetails) => {
+      if(this.pageConfigs.isLazy) {
+        await this.loadUsers(null);
       }
-      this.users = this.sortUsers(this.users);
-    })
-  }
-
-  private userDetails(userId: number): void {
-    this.router.navigate([`/admin/users/${userId}`]);
+      else {
+        await this.getAllUsers(); 
+      }
+    },
+    error => {
+      this.displayError = true;
+      this.error = "Could not update user"
+    });
   }
 
   private deleteUser(userId: number): void {
-    this.sudoService.deleteUser(userId).subscribe((user) => {
-      this.getAllUsers();
+    this.sudoService.deleteUser(userId).subscribe(async () => {
+      if(this.pageConfigs.isLazy) {
+        await this.loadUsers(null);
+      }
+      else {
+        await this.getAllUsers(); 
+      }
     },
-    error => {
+    () => {
       this.displayError = true;
       this.error = "Could not delete user"
     });
   }
 
-  private sortUsers(users: DisplayUserDTO[]): DisplayUserDTO[] {
-    const sortingRules: SortingRuleFormat[] = [
-      {field: "createdOn", order: "DESC"},
-    ]
-    return Sorting.dataSorting(users, sortingRules);
+  /**
+   * server side pagination
+   */
+
+  private async loadUsers(tableElement) {
+    this.setPagination(tableElement);
+    await this.getAllUsers();
   }
 
-  private loadUsers(tableElement){
-    this.skip = tableElement._first;
-    this.take = tableElement._rows;
-    this.getAllUsers();
-  }
 
-  private applyNameFilter() {
+
+  /**
+   * server side filtering
+   */
+
+  private async applyNameFilter() {
     if(this.nameFilterInput && this.nameFilterInput.length>0) {
       this.whereName = `name:contains ${this.nameFilterInput}`;
     }
@@ -142,10 +157,10 @@ export class UsersComponent implements OnInit {
       this.whereName = null;
     }
     this.getWhereQuery();
-    this.getAllUsers();
+    await this.loadUsers(null);
   }
 
-  private applyGenderFilter(gender: string) {
+  private async applyGenderFilter(gender: string) {
     if(gender) {
       this.whereGender = `gender:equals ${gender}`;
     }
@@ -153,10 +168,10 @@ export class UsersComponent implements OnInit {
       this.whereGender = null;
     }
     this.getWhereQuery();
-    this.getAllUsers();
+    await this.loadUsers(null);
   }
 
-  private applyTypeFilter(type: string) {
+  private async applyTypeFilter(type: string) {
     if(type) {
       this.whereType = `role:equals ${type}`;
     }
@@ -164,10 +179,18 @@ export class UsersComponent implements OnInit {
       this.whereType = null;
     }
     this.getWhereQuery();
-    this.getAllUsers();
+    await this.loadUsers(null);
   }
 
-  private applyDateFilter() {
+  private async applyStatusFilter() {
+    console.log(this.isOnlyActive);
+    if(this.isOnlyActive) this.whereActive = `active:boolean(${true})`;
+    else this.whereActive = null;
+    this.getWhereQuery();
+    await this.loadUsers(null);
+  }
+
+  private async applyDateFilter() {
     if(this.startDateFilterInput && this.endDateFilterInput) {
       this.displayCalendar = false;
       this.dateRange = {
@@ -178,18 +201,18 @@ export class UsersComponent implements OnInit {
     else {
       this.dateRange = null;
     }
-    this.getAllUsers();
+    await this.loadUsers(null);
   }
 
-  private removeDateFilter() {
+  private async removeDateFilter() {
     this.startDateFilterInput = null;
     this.endDateFilterInput = DateFormatting.dateStringToUTC(new Date());
     this.displayCalendar = false;
     this.dateRange = null;
-    this.getAllUsers();
+    await this.loadUsers(null);
   }
 
-  private removeAllFilters() {
+  private async removeAllFilters() {
     this.nameFilterInput = null;
     this.typeFilterInput = null;
     this.genderFilterInput = null;
@@ -198,14 +221,26 @@ export class UsersComponent implements OnInit {
     this.whereType = null;
     this.where = null;
     this.removeDateFilter();
-    this.getAllUsers();
+    await this.loadUsers(null);
   }
   
   private getWhereQuery(){
     this.where = 
       (this.whereName ? this.whereName + ',': '') +
       (this.whereGender ? this.whereGender + ',':'') +
+      (this.whereActive ? this.whereActive + ',':'') +
       (this.whereType ? this.whereType:'');
+  }
+
+
+  /**
+   * server side sorting
+   */
+
+   private async applyServerSideSorting(fieldName: string) {
+    this.orderBy = `${fieldName}:${this.order}`;
+    this.order = this.order == 'asc' ? 'desc' : 'asc';
+    await this.loadUsers(null);
   }
 }
 

@@ -10,13 +10,9 @@ import { BaseService } from './base.service';
 })
 export class SudoService extends BaseService {
 
-    // constructor(
-    //     public http: HttpClient,
-    //     private jwtHelper: JwtHelperService) {
-    //     super(http);
-    //   }
     // users
-    public getUsers(skip?: number, take?: number, where?: string, dateRange?: {start: string, end: string})
+    public getUsers(skip?: number, take?: number, where?: string, 
+        dateRange?: {start: string, end: string}, orderBy?: string)
         : Observable<any> {
         var uri = `/users?`;
         if(!isNaN(skip) && !isNaN(take)){
@@ -26,8 +22,12 @@ export class SudoService extends BaseService {
             uri += `where=${where}&`;
         }
         if(dateRange) {
-            uri += `startDate=${dateRange.start}&endDate=${dateRange.end}`;
+            uri += `startDate=${dateRange.start}&endDate=${dateRange.end}&`;
         }
+        if(orderBy) {
+            uri += `orderBy=${orderBy}`;
+        }
+        if(uri[uri.length-1]=='&') uri = uri.slice(0,uri.length-1);
         uri = uri.trim();
         return this.http.get(this.API_URL + uri, this.getHttpOptions());
     }
@@ -55,7 +55,8 @@ export class SudoService extends BaseService {
     //teams
 
     public getAllAvailableTeams(skip?: number, take?: number, where?: string,
-         dateRange?: {start: string, end: string}): Observable<object> {
+         dateRange?: {start: string, end: string}, orderBy?: string): Observable<any> {
+
         var uri = `/groups?`;
         if(!isNaN(skip) && !isNaN(take)){
             uri += `skip=${skip}&take=${take}&`; 
@@ -64,8 +65,12 @@ export class SudoService extends BaseService {
             uri += `where=${where}&`;
         }
         if(dateRange) {
-            uri += `startDate=${dateRange.start}&endDate=${dateRange.end}`;
+            uri += `startDate=${dateRange.start}&endDate=${dateRange.end}&`;
         }
+        if(orderBy) {
+            uri += `orderBy=${orderBy}`;
+        }
+        if(uri[uri.length-1]=='&') uri = uri.slice(0,uri.length-1);
         uri = uri.trim();
         return this.http.get(this.API_URL + uri, this.getHttpOptions());
     }
