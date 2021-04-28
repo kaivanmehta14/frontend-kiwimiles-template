@@ -18,6 +18,7 @@ import { UserProfileComponent } from '../../pages/user-profile/user-profile.comp
 import { AuthLayoutModule } from '../auth-layout/auth-layout.module';
 import { AdminLayoutRoutes } from './admin-layout.routing';
 import { DropdownModule } from 'primeng/dropdown';
+import {ToastModule} from 'primeng/toast';
 import { TeamsComponent } from '../../pages/teams/teams.component';
 import { TeamDetailsComponent } from '../../pages/team-details/team-details.component';
 import { BadgeModule } from 'primeng/badge';
@@ -30,6 +31,8 @@ import { TeamRolesComponent } from 'src/app/pages/team-roles/team-roles.componen
 import { RoleDetailsComponent } from 'src/app/pages/role-details/role-details.component';
 import { AllRolesComponent } from 'src/app/pages/all-roles/all-roles.component';
 import { CalendarModule } from 'primeng/calendar';
+import { AdminSettingsComponent } from 'src/app/pages/admin-settings/admin-settings.component';
+import { MessageService } from 'primeng/api';
 
 @NgModule({
   imports: [
@@ -50,7 +53,8 @@ import { CalendarModule } from 'primeng/calendar';
     TableModule,
     BadgeModule,
     TooltipModule,
-    CalendarModule
+    CalendarModule,
+    ToastModule
   ],
   declarations: [
     DashboardComponent,
@@ -65,8 +69,10 @@ import { CalendarModule } from 'primeng/calendar';
     PeekUserComponent,
     TeamRolesComponent,
     RoleDetailsComponent,
-    AllRolesComponent
+    AllRolesComponent,
+    AdminSettingsComponent
   ],
+  providers:[MessageService]
 })
 
 export class AdminLayoutModule {}

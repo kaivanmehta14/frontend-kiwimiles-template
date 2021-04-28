@@ -1,3 +1,4 @@
+<p-toast></p-toast>
 <div class="header bg-gradient-danger py-7 py-lg-8">
   <div class="container">
     <div class="header-body text-center mb-7">
@@ -9,9 +10,6 @@
     </div>
   </div>
 </div>
-<p-dialog header="Error" [(visible)]="displayError" [style]="{'width': '30vw'}" [baseZIndex]="10000">
-  <p style="color: red;"><strong>{{error}}</strong></p>
-</p-dialog>
 <div class="container mt--8 pb-5">
   <div class="row justify-content-center">
     <p-table *ngIf="memberships && memberships.length > 0" [value]="memberships" styleClass="p-datatable-striped">

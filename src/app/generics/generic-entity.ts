@@ -1,3 +1,4 @@
+import { MessageService } from "primeng/api";
 import { ROWS_PER_PAGE_OPTIONS } from "../constants/pagination.constant";
 import { DropdownDTO } from "../dto/dropdown.dto";
 import { DateFormatting } from "../helpers/date-formatting";
@@ -26,7 +27,10 @@ export class GenericEntityComponent {
 
     /* errors */
     protected error: string;
-    protected displayError: boolean = false;
+
+    constructor(
+      protected messageService: MessageService
+    ){}
 
     protected preSort<T>(data: T[], rules: SortingRuleFormat[]): T[] {
         return Sorting.dataSorting(data, rules);
@@ -41,6 +45,14 @@ export class GenericEntityComponent {
         this.skip = tableElement._first;
         this.take = tableElement._rows;
       }
+    }
+
+    protected showSuccess(message: string): void {
+      this.messageService.add({severity:'success', summary: 'Success', detail: message});
+    }
+  
+    protected showError(message: string) {
+      this.messageService.add({severity:'error', summary: 'Error', detail: message});
     }
 }
 

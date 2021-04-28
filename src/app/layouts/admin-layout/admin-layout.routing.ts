@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { AdminSettingsComponent } from 'src/app/pages/admin-settings/admin-settings.component';
 import { AllRolesComponent } from 'src/app/pages/all-roles/all-roles.component';
 import { RoleDetailsComponent } from 'src/app/pages/role-details/role-details.component';
 import { TeamRolesComponent } from 'src/app/pages/team-roles/team-roles.component';
@@ -28,7 +29,8 @@ export const AdminLayoutRoutes: Routes = [
   { path: 'team-roles/:teamId', component: TeamRolesComponent },
   { path: 'roles/:roleId', component: RoleDetailsComponent },
   { path: 'all-teams', component: AllTeamsComponent },
-  { path: 'all-roles', component: AllRolesComponent}
+  { path: 'all-roles', component: AllRolesComponent},
+  { path: 'admin-settings', component: AdminSettingsComponent}
   
   //{ path: 'maps', component: MapsComponent }
 ];

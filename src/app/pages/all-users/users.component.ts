@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { USER_GENDERS, USER_GENDERS_FILTER_OPTIONS, USER_TYPES, USER_TYPE_FILTER_OPTIONS } from 'src/app/constants/user.constant';
 import { GenericEntityComponent, GET_CONFIGURATION_DTO } from 'src/app/generics/generic-entity';
 import { DateFormatting } from 'src/app/helpers/date-formatting';
@@ -40,8 +41,9 @@ export class UsersComponent extends GenericEntityComponent implements OnInit {
   constructor(
     private readonly sudoService: SudoService,
     private readonly router: Router,
+    protected messageService: MessageService
   ) {
-    super();
+    super(messageService);
   }
 
   async ngOnInit() {
@@ -105,7 +107,8 @@ export class UsersComponent extends GenericEntityComponent implements OnInit {
       role: user.role,
       gender: user.gender
     }
-    this.sudoService.updateUser(user.id, updateUserObject).subscribe(async (userDetails) => {
+    this.sudoService.updateUser(user.id, updateUserObject).subscribe(async () => {
+      this.showSuccess("User successfully Updated!");
       if(this.pageConfigs.isLazy) {
         await this.loadUsers(null);
       }
@@ -114,13 +117,13 @@ export class UsersComponent extends GenericEntityComponent implements OnInit {
       }
     },
     error => {
-      this.displayError = true;
-      this.error = "Could not update user"
+      this.showError("User Could not be Updated: " + error.statusText);
     });
   }
 
   private deleteUser(userId: number): void {
     this.sudoService.deleteUser(userId).subscribe(async () => {
+      this.showSuccess("User successfully Deleted!");
       if(this.pageConfigs.isLazy) {
         await this.loadUsers(null);
       }
@@ -128,9 +131,8 @@ export class UsersComponent extends GenericEntityComponent implements OnInit {
         await this.getAllUsers(); 
       }
     },
-    () => {
-      this.displayError = true;
-      this.error = "Could not delete user"
+    error => {
+      this.showError("User could not be Deleted!" + error.statusText);
     });
   }
 
@@ -183,7 +185,6 @@ export class UsersComponent extends GenericEntityComponent implements OnInit {
   }
 
   private async applyStatusFilter() {
-    console.log(this.isOnlyActive);
     if(this.isOnlyActive) this.whereActive = `active:boolean(${true})`;
     else this.whereActive = null;
     this.getWhereQuery();

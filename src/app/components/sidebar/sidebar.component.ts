@@ -14,6 +14,7 @@ export const SUDO_ROUTES: RouteInfo[] = [
   { path: '/admin/users', title: 'All Users', icon: 'pi pi-users text-indigo font-weight-bold', class: '' },    
   { path: '/admin/all-teams', title: 'All Teams', icon: 'fa fa-users text-green', class: '' },
   { path: '/admin/all-roles', title: 'All Roles', icon: 'fa fa-tasks text-orange', class: '' },
+  { path: '/admin/admin-settings', title: 'Settings', icon: 'fa fa-cog', class: '' },
 ];
 
 export const ROUTES: RouteInfo[] = [

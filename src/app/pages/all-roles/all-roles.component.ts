@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { RoleDTO } from 'src/app/dto/role.dto';
 import { GenericEntityComponent, GET_CONFIGURATION_DTO } from 'src/app/generics/generic-entity';
-import { Sorting, SortingRuleFormat } from 'src/app/helpers/sorting';
 import { RoleService } from 'src/app/services/roles.service';
 
 @Component({
   selector: 'app-all-roles',
   templateUrl: './all-roles.component.html',
-  styleUrls: ['./all-roles.component.css']
+  styleUrls: ['./all-roles.component.css'],
 })
 export class AllRolesComponent extends GenericEntityComponent implements OnInit {
 
@@ -27,9 +27,10 @@ export class AllRolesComponent extends GenericEntityComponent implements OnInit 
 
   constructor(
     private readonly roleService: RoleService,
-    private readonly router: Router
+    private readonly router: Router,
+    protected messageService: MessageService
   ) {
-    super();
+    super(messageService);
    }
 
   async ngOnInit(): Promise<void> {
@@ -45,6 +46,7 @@ export class AllRolesComponent extends GenericEntityComponent implements OnInit 
     }
     this.error = null;
     this.roleService.addRole({name: this.createRoleName}).subscribe(async ()=>{
+      this.showSuccess("Role added successfully!")
       if (this.pageConfigs.isLazy) {
         await this.loadRoles(null);
       }
@@ -53,9 +55,8 @@ export class AllRolesComponent extends GenericEntityComponent implements OnInit 
       }
       this.getAllRoles();
     },
-    () => {
-      this.displayError = true;
-      this.error = "Could not add role"
+    error => {
+      this.showError("Could not add role: "+ error.statusText);
     });
   }
 
@@ -94,6 +95,7 @@ export class AllRolesComponent extends GenericEntityComponent implements OnInit 
 
   private deleteRole(roleId: number): void {
     this.roleService.deleteRole(roleId).subscribe(async ()=>{
+      this.showSuccess("Role deleted!")
       if(this.pageConfigs.isLazy) {
         await this.loadRoles(null);
       }
@@ -102,9 +104,8 @@ export class AllRolesComponent extends GenericEntityComponent implements OnInit 
       }
       this.getAllRoles();
     },
-    () => {
-      this.displayError = true;
-      this.error = "Could not delete role"
+    error => {
+      this.showError("Could not delete role: "+ error.statusText);
     });
   }
 
@@ -114,7 +115,6 @@ export class AllRolesComponent extends GenericEntityComponent implements OnInit 
 
   private async loadRoles(tableElement){
     this.setPagination(tableElement);
-    console.log(tableElement)
     await this.getAllRoles();
   }
 

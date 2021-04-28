@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { ROWS_PER_PAGE_OPTIONS } from 'src/app/constants/pagination.constant';
 import { RoleDTO } from 'src/app/dto/role.dto';
 import { UserService } from 'src/app/services';
@@ -29,7 +30,6 @@ export class TeamRolesComponent implements OnInit {
   private selectAll:boolean = false;
   private isAllocateAllRoles: boolean = false;
   private error: string;
-  private displayError: boolean = false;
   private isDefaultTeam: boolean = false;
   private skip: number;
   private take: number;
@@ -42,7 +42,8 @@ export class TeamRolesComponent implements OnInit {
     private readonly roleService: RoleService,
     private readonly activatedRoute: ActivatedRoute,
     private readonly userService: UserService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly messageService: MessageService
   ) {
     this.activatedRoute.params.subscribe((data: { teamId: number }) => {
       this.teamId = data.teamId
@@ -63,8 +64,7 @@ export class TeamRolesComponent implements OnInit {
     const roleInformationData: {roles: any[], length: number} = await this.roleService.getAllRoles()
     .toPromise()
     .catch(error => {
-      this.displayError = true;
-      this.error = "Could not find roles"
+      this.showError("Could not find roles: " + error.statusText);
     });
     const roleInformation = roleInformationData.roles;
     if (roleInformation && roleInformation.length > 0) {
@@ -82,8 +82,7 @@ export class TeamRolesComponent implements OnInit {
         await this.roleService.getTeamRoles(this.teamId)
         .toPromise()
         .catch(error=>{
-            this.displayError = true;
-            this.error = "Could not find team roles"
+          this.showError("Could not find team roles: " + error.statusText);
         });
       const allotedRoles = allotedRolesData.roles;
       this.totalRecords = allotedRolesData.length;
@@ -105,13 +104,13 @@ export class TeamRolesComponent implements OnInit {
     }).filter(value=> value);
 
     this.roleService.updateTeamRoles(this.teamId, roles).subscribe(async ()=>{
+      this.showSuccess("Roles updated!");
       await this.getAllRoles();
       this.givenRolesToDisplay = this.givenRoles.slice(0, this.numberOfRowsPerPage);
       this.selectAll = false;
     },
     error => {
-      this.displayError = true;
-      this.error = "Could not update roles"
+      this.showError("Roles could not be updated: " + error.statusText);
     })
   }
 
@@ -129,5 +128,13 @@ export class TeamRolesComponent implements OnInit {
     const take = this.numberOfRowsPerPage;
     if(!this.givenRoles) await this.getAllRoles();
     this.givenRolesToDisplay = this.givenRoles.slice(skip, skip + take);
+  }
+
+  private showSuccess(message: string): void {
+    this.messageService.add({severity:'success', summary: 'Success', detail: message});
+  }
+
+  private showError(message: string) {
+    this.messageService.add({severity:'error', summary: 'Error', detail: message});
   }
 }

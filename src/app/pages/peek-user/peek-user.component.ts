@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { UserDTO } from '../../dto/user.dto';
 import { ActivatedRoute } from '@angular/router';
 import { SudoService } from 'src/app/services/sudo.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-peek-user',
@@ -16,6 +17,7 @@ export class PeekUserComponent implements OnInit {
   constructor(
     private readonly sudoService: SudoService,
     private readonly activatedRoute: ActivatedRoute,
+    private readonly messageService: MessageService
   ) {
     this.activatedRoute.params.subscribe((data: { userId: number }) => {
       this.userId = data.userId;
@@ -34,18 +36,18 @@ export class PeekUserComponent implements OnInit {
         this.user.email = emailData[0].email;
       }
       else {
-        console.error('No emails found');
+        this.showError('No emails found');
       }
     }
     else {
-      console.error('user id not found');
+      this.showError('user id not found');
     }
   }
 
   async getUserProfile() {
     const userDetails = await this.sudoService.getUserProfile(this.userId).toPromise();
     if (!userDetails) {
-      console.log('user details not found!');
+      this.showError('user details not found!');
     }
     else {
       this.user = {
@@ -63,6 +65,12 @@ export class PeekUserComponent implements OnInit {
         ispasswordLess: false
       }
     }
+  }
+  private showSuccess(message: string): void {
+    this.messageService.add({severity:'success', summary: 'Success', detail: message});
+  }
 
+  private showError(message: string) {
+    this.messageService.add({severity:'error', summary: 'Error', detail: message});
   }
 }

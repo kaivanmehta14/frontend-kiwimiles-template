@@ -19,7 +19,6 @@ export class RoleService extends BaseService {
     if(orderBy) {
         uri += `orderBy=${orderBy}`;
     }
-    console.log(uri);
     if(uri[uri.length-1]=='&') uri = uri.slice(0,uri.length-1);
     uri = uri.trim();
     return this.http.get(uri, this.getHttpOptions());

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { GenericEntityComponent, GET_CONFIGURATION_DTO } from 'src/app/generics/generic-entity';
 import { DateFormatting } from 'src/app/helpers/date-formatting';
 import { SudoService } from 'src/app/services/sudo.service';
@@ -40,9 +41,10 @@ export class AllTeamsComponent extends GenericEntityComponent implements OnInit 
     private readonly authenticationService: AuthenticationService,
     private readonly teamService: TeamService,
     private readonly sudoService: SudoService,
-    private readonly router: Router
+    private readonly router: Router,
+    protected messageService: MessageService
   ) {
-    super();
+    super(messageService);
   }
 
   async ngOnInit() {
@@ -64,6 +66,7 @@ export class AllTeamsComponent extends GenericEntityComponent implements OnInit 
     this.error = null;
     const parentId: number = this.selectedParent.code ? +this.selectedParent.code : null;
     this.teamService.createTeam(this.createTeamName, parentId).subscribe(async () => {
+      this.showSuccess("Team created successfully!");
       if (this.pageConfigs.isLazy) {
         await this.loadTeams(null);
         await this.getAllParents();
@@ -73,9 +76,8 @@ export class AllTeamsComponent extends GenericEntityComponent implements OnInit 
       }
       this.selectedParent.code = null;
     },
-    () => {
-      this.displayError = true;
-      this.error = "Could not add team"
+    error => {
+      this.showError("Team could not be created: "+ error.statusText);
     });
     this.authenticationService.refreshAccessToken().subscribe();
   }
@@ -118,7 +120,8 @@ export class AllTeamsComponent extends GenericEntityComponent implements OnInit 
   }
 
   private updateTeam(team: GroupDTO): void {
-    this.teamService.updateTeam(team.id, team.name).subscribe(async (teamDetails) => {
+    this.teamService.updateTeam(team.id, team.name).subscribe(async () => {
+      this.showSuccess("Team updated successfully!");
       if (this.pageConfigs.isLazy) {
         await this.loadTeams(null);
       }
@@ -127,8 +130,7 @@ export class AllTeamsComponent extends GenericEntityComponent implements OnInit 
       }
     },
     error => {
-      this.displayError = true;
-      this.error = "Could not update team"
+      this.showError("Team could not be updated: " + error.statusText);
     });
   }
 
@@ -148,6 +150,7 @@ export class AllTeamsComponent extends GenericEntityComponent implements OnInit 
 
   private deleteTeam(teamId: number): void {
     this.teamService.deleteTeam(teamId).subscribe(async () => {
+      this.showSuccess("Team deleted successfully!");
       if(this.pageConfigs.isLazy) {
         await this.loadTeams(null);
         await this.getAllParents();
@@ -155,7 +158,10 @@ export class AllTeamsComponent extends GenericEntityComponent implements OnInit 
       else {
         await this.getAllTeams(); 
       }
-    })
+    },
+    error => {
+      this.showError("Team could not be deleted: " + error.statusText);
+    });
   }
 
 

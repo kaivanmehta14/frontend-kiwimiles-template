@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MessageService } from 'primeng/api';
 import { PermissionService } from 'src/app/services/permission.service';
 import { UserDTO } from '../../dto/user.dto';
 import { UserService } from '../../services';
@@ -15,14 +16,13 @@ interface GenderDTO {
 })
 export class UserProfileComponent implements OnInit {
 
-  user: UserDTO;
-  editable: boolean = false;
-  hasEmailReadPermission: boolean = false;
-  hasProfileWritePermission: boolean = false;
-  hasEmailWritePermission: boolean = false;
-  displayError: boolean = false;
-  error: string;
-  genders: GenderDTO[] = [
+  private user: UserDTO;
+  private editable: boolean = false;
+  private hasEmailReadPermission: boolean = false;
+  private hasProfileWritePermission: boolean = false;
+  private hasEmailWritePermission: boolean = false;
+  private error: string;
+  private genders: GenderDTO[] = [
     { label: 'Male', type: 'MALE' },
     { label: 'Female', type: 'FEMALE' },
     { label: 'Transgender', type: 'NON BINARY' },
@@ -30,8 +30,9 @@ export class UserProfileComponent implements OnInit {
   ];
 
   constructor(
-    private userService: UserService,
-    private permissionService: PermissionService
+    private readonly userService: UserService,
+    private readonly permissionService: PermissionService,
+    private readonly messageService: MessageService
   ) { }
 
   async ngOnInit() {
@@ -47,8 +48,7 @@ export class UserProfileComponent implements OnInit {
         this.user.email = emailData[0].email;
       }
       else {
-          this.displayError = true;
-          this.error = "Could not find email"
+        this.showError("Email could not be found!");
       }
     }
     else {
@@ -59,7 +59,7 @@ export class UserProfileComponent implements OnInit {
   private async getUserProfile() {
     const userDetails = await this.userService.getUserProfile().toPromise();
     if (!userDetails) {
-      console.log('user details not found!');
+      this.showError('user details not found!');
     }
     else {
       this.user = {
@@ -89,10 +89,10 @@ export class UserProfileComponent implements OnInit {
     this.userService.updateUserProfile(this.user).subscribe(
       () => {
         this.editable = false;
+        this.showSuccess("Profile updated!");
       },
       error => {
-        this.displayError = true;
-        this.error = "Could not update user"
+        this.showError("Profile could not be updated: " + error.statusText);
       }
     )
   }
@@ -100,5 +100,13 @@ export class UserProfileComponent implements OnInit {
   private checkPermissions(){
     this.hasEmailReadPermission = this.permissionService.checkPermission("Read user email");
     this.hasProfileWritePermission = this.permissionService.checkPermission("Write user details");
+  }
+
+  private showSuccess(message: string): void {
+    this.messageService.add({severity:'success', summary: 'Success', detail: message});
+  }
+
+  private showError(message: string) {
+    this.messageService.add({severity:'error', summary: 'Error', detail: message});
   }
 }

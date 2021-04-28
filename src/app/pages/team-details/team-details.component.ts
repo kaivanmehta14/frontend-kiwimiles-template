@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { UserService } from 'src/app/services';
 import { InviteDialogComponent } from '../../components/invite-dialog/invite-dialog.component';
@@ -27,15 +28,13 @@ export class TeamDetailsComponent implements OnInit {
   private members: MemberDTO[];
   private roles: DropdownDTO[];
   private error: string;
-  private displayError: boolean = false;
-
   constructor(
     private dialogService: DialogService,
     private readonly teamService: TeamService,
     private readonly activatedRoute: ActivatedRoute,
     private readonly permissionService: PermissionService,
-    private readonly userService: UserService
-
+    private readonly userService: UserService,
+    private readonly messageService: MessageService
   ) {
 
     this.activatedRoute.params.subscribe((data: { teamId: number, role: string }) => {
@@ -50,9 +49,8 @@ export class TeamDetailsComponent implements OnInit {
     this.teamService.getTeamDetails(this.teamId).subscribe((team: { name: string }) => {
       this.teamName = team.name;
     },
-    err => { 
-      this.displayError = true;
-      this.error = "Could not load details"
+    error => { 
+      this.showError("could not load teams: " + error.statusText)
     })
     this.getAllMembers();
     this.setStaticRoles();
@@ -102,8 +100,10 @@ export class TeamDetailsComponent implements OnInit {
 
     ref.onClose.subscribe(async (success: boolean) => {
       if(!success){
-        this.displayError = true;
-        this.error = "Could not add member"
+        this.showError("could not add member: ");
+      }
+      else {
+        this.showSuccess("Member added successfully!");
       }
       this.getAllMembers();
     });
@@ -159,10 +159,10 @@ export class TeamDetailsComponent implements OnInit {
     const index: number = this.members.findIndex(member => member.id == memberId);
     this.teamService.updateMember(this.teamId, memberId, this.members[index].role).subscribe((memberDetails) => {
       this.getAllMembers();
+      this.showSuccess("Member updated!");
     },
-    err => { 
-      this.displayError = true;
-      this.error = "Could not update member"
+    error => { 
+      this.showError("Could not update member: " + error.statusText)
     });
   }
 
@@ -174,10 +174,13 @@ export class TeamDetailsComponent implements OnInit {
 
   deleteMember(memberId: number): void {
 
-    this.teamService.deleteMember(memberId, this.teamId).subscribe(() => { this.getAllMembers() },
-      err => { 
-        this.displayError = true;
-        this.error = "Could not delete member"
+    this.teamService.deleteMember(memberId, this.teamId)
+      .subscribe(() => { 
+        this.showSuccess("Member Deleted!");
+        this.getAllMembers() ;
+      },
+      error => { 
+        this.showError("Member could not be deleted: " + error.statusText);
       });
   }
 
@@ -194,5 +197,12 @@ export class TeamDetailsComponent implements OnInit {
     return dateString;
   }
 
+  private showSuccess(message: string): void {
+    this.messageService.add({severity:'success', summary: 'Success', detail: message});
+  }
+
+  private showError(message: string) {
+    this.messageService.add({severity:'error', summary: 'Error', detail: message});
+  }
 }
 

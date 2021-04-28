@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { MembershipDTO } from '../../dto/membership.dto';
 import { AuthenticationService, UserService } from '../../services';
 import { PermissionService } from '../../services/permission.service';
@@ -18,7 +19,6 @@ export class TeamsComponent implements OnInit {
   memberships: MembershipDTO[];
   createTeamName: string;
   error: string;
-  private displayError: boolean = false;
 
   constructor(
     private readonly authenticationService: AuthenticationService,
@@ -26,13 +26,13 @@ export class TeamsComponent implements OnInit {
     private readonly teamService: TeamService,
     private readonly permissionService: PermissionService,
     private readonly router: Router,
+    private readonly messageService: MessageService
   ) {
     this.userService.getUserProfile().subscribe((user) => {
       this.userName = user.name;
     },
       (error) => {
-        this.displayError = true;
-        this.error = "Failed to get user profile"
+        this.showError("Fail to get user profile: " + error.statusText);
       }
     );
   }
@@ -53,11 +53,11 @@ export class TeamsComponent implements OnInit {
     }
     this.error = null;
     this.teamService.createTeam(this.createTeamName).subscribe((teamDetails) => {
+      this.showSuccess("team created");
       this.getAllMemberships();
     },
     error =>{
-      this.displayError = true;
-      this.error = "Could not add team"
+      this.showError("team could not be created: " + error.statusText);
     });
     this.authenticationService.refreshAccessToken().subscribe((data) => {
       history.go(0);
@@ -71,12 +71,12 @@ export class TeamsComponent implements OnInit {
 
   private updateTeam(teamId: number): void {
     const index: number = this.memberships.findIndex(membership => membership.group.id == teamId);
-    this.teamService.updateTeam(teamId, this.memberships[index].group.name).subscribe((teamDetails) => {
+    this.teamService.updateTeam(teamId, this.memberships[index].group.name).subscribe(() => {
+      this.showSuccess("team updated");
       this.getAllMemberships();
     },
     error =>{
-      this.displayError = true;
-      this.error = "Could not update team"
+      this.showError("team could not be updated: " + error.statusText);
     });
   }
 
@@ -114,11 +114,11 @@ export class TeamsComponent implements OnInit {
 
   private deleteTeam(teamId: number): void {
     this.teamService.deleteTeam(teamId).subscribe((teamDetails) => {
+      this.showSuccess("team deleted");
       this.getAllMemberships();
     },
     error =>{
-      this.displayError = true;
-      this.error = "Could not delete team"
+      this.showError("team could not be deleted: " + error.statusText);
     });
   }
 
@@ -133,6 +133,14 @@ export class TeamsComponent implements OnInit {
 
   private checkPermission(): void {
     this.hasReadPermission = this.permissionService.checkPermission("Read groups");
+  }
+
+  private showSuccess(message: string): void {
+    this.messageService.add({severity:'success', summary: 'Success', detail: message});
+  }
+
+  private showError(message: string) {
+    this.messageService.add({severity:'error', summary: 'Error', detail: message});
   }
 }
 
