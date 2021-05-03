@@ -182,6 +182,46 @@ argon-dashboard-angular
 └── tslint.json
 ```
 
+## Getting Started (MK #3rd May 2021)
+
+1. To Run the application: 
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+ng serve or npm run start
+
+2. To build the application:
+ng build or npm run build
+
+3. Working on Port: 4200
+
+
+## Folders Descriptions and Utilities (MK #3rd May 2021)
+
+1. src: parent folder: 
+
+2. app > components: Contains all the reusable components for example dialog boxes
+
+3. app > constats: Contains global constants
+
+4. app > dto: Contains object structures
+
+5. app > errors: Contains error constants
+
+6. app > generics: Contains generic class which is extended by other classes for reusing generic entity
+                   functionality
+
+7. app > helpers: Contains frequently used helper methods
+
+8. app > layouts: Contains different view of differnt roles: admin-layout, auth-layout etc
+
+9. app > pages: Contains all the pages which are displayed
+
+10. app > services: Contains api call to the server
+
+11. app > varibles: Contains global varibles
+
+12. assets: Contains all the images and assets.
+
+13. environment: --hidden--
 
 ## Browser Support
 
